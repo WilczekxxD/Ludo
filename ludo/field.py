@@ -43,11 +43,15 @@ class Field:
         # drawing pawns as circles, with numbers
 
         for key in self.pawns:
-            for i in range(len(self.pawns[key])):
+            for i, pawn in enumerate(self.pawns[key]):
                 x = self.x + (i % 2) * self.side//2 + self.side//4
                 y = self.y + + (i // 2) * self.side//2 + self.side//4
-                pygame.draw.circle(self.win, (100, 100, 100), (int(x), int(y)), int((self.side//4) - 1), 6)
-                pygame.draw.circle(self.win, key, (int(x), int(y)), int((self.side // 4) - 5))
+                r = int((self.side//4))
+                pygame.draw.circle(self.win, (100, 100, 100), (int(x), int(y)), r - 1, 6)
+                pygame.draw.circle(self.win, key, (int(x), int(y)), r - 5)
+                font = pygame.font.SysFont('arial', r)
+                text = font.render(str(pawn.index), True, (0, 0, 0))
+                self.win.blit(text, (x-r/2 + 2, y-r/2 - 2))
 
 
 if __name__ == "__main__":
