@@ -1,5 +1,5 @@
 import time
-from field import Field
+from ludo.field import Field
 import pygame
 from colorama import Fore, init
 init(autoreset=True)

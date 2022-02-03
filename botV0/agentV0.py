@@ -19,7 +19,7 @@ class Player:
         for x, pawn in enumerate(self.pawns):
             self.starting.fields[x].pawns[self.color].append(pawn)
 
-    def move(self, strikes, chosen):
+    def move(self, strikes, players):
         # moves = dice.throw()
         moves = int(input("how far do you wanna move: "))
         print(f"dice: {moves}")

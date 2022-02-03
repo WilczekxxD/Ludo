@@ -1,3 +1,5 @@
+from typing import Any
+
 import pygame
 pygame.font.init()
 
@@ -47,8 +49,10 @@ class Field:
                 x = self.x + (i % 2) * self.side//2 + self.side//4
                 y = self.y + + (i // 2) * self.side//2 + self.side//4
                 r = int((self.side//4))
+                # drawing circles
                 pygame.draw.circle(self.win, (100, 100, 100), (int(x), int(y)), r - 1, 6)
                 pygame.draw.circle(self.win, key, (int(x), int(y)), r - 5)
+                # adding numbers
                 font = pygame.font.SysFont('arial', r)
                 text = font.render(str(pawn.index), True, (0, 0, 0))
                 self.win.blit(text, (x-r/2 + 2, y-r/2 - 2))

@@ -1,8 +1,8 @@
 import time
-from field import Field
-from path import Path
-from final import  Final
-from starting import Starting
+from ludo.field import Field
+from ludo.path import Path
+from ludo.final import  Final
+from ludo.starting import Starting
 import pygame
 from colorama import Fore, init
 init(autoreset=True)
