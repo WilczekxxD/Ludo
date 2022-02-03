@@ -132,10 +132,10 @@ class Path:
                         defence += 1
                         potential_casualties.append(pawn)
 
-        if defence <= attack and defence != 0:
-            conflict = True
-            for pawn in potential_casualties:
-                pawn.reset()
+            if defence <= attack and defence != 0:
+                conflict = True
+                for pawn in potential_casualties:
+                    pawn.reset()
 
         return conflict
 

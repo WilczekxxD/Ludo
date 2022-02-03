@@ -1,6 +1,6 @@
 import pygame.display
 
-import ludo.dice
+import ludo.dice as dice
 from ludo.pawn import Pawn
 
 
@@ -19,9 +19,9 @@ class Player:
         for x, pawn in enumerate(self.pawns):
             self.starting.fields[x].pawns[self.color].append(pawn)
 
-    def move(self, strikes, chosen):
-        # moves = dice.throw()
-        moves = int(input("how far do you wanna move: "))
+    def move(self, strikes):
+        moves = dice.throw()
+        # moves = int(input("how far do you wanna move: "))
         print(f"dice: {moves}")
         if moves == 6:
             strikes += 1
@@ -41,9 +41,19 @@ class Player:
 
             elif len(candidates) != 0:
                 print([candidate.index for candidate in candidates], self.color)
-                chosen = candidates[int(input("give the index of your choice: "))]
+                move = True
+                while move:
+                    chosen = int(input("give the number of your pawn of choice: "))
+                    try:
+                        for candidate in candidates:
+                            if candidate.index == chosen:
+                                chosen = candidate
+                        chosen.move(moves)
+                        move = False
 
-                chosen.move(moves)
+                    except:
+                        print("wrong input")
+
 
             if chosen and (moves == 6 or chosen.finished):
                 again = True
