@@ -19,41 +19,21 @@ class Player:
         for x, pawn in enumerate(self.pawns):
             self.starting.fields[x].pawns[self.color].append(pawn)
 
-    def move(self, strikes, moves, chosen):
+    def move(self, strikes, moves, chosen, candidates):
+        chosen = chosen
         reward = 0
         if moves == 6:
             strikes += 1
         again = False
-        candidates = []
 
         if strikes != 3:
-            for pawn in self.pawns:
-                pawn.movable(moves)
-                if pawn.possible or (pawn.position == -1 and moves == 6):
-                    candidates.append(pawn)
-
-            if len(candidates) == 1:
-                if chosen == candidates[0]:
-                    reward += 5
+            if len(candidates) != 0:
+                if chosen in candidates:
+                    reward += 2
                 else:
-                    reward -= 5
+                    reward -= 2
                     chosen = candidates[0]
                 chosen.move(moves)
-
-            elif len(candidates) != 0:
-                print([candidate.index for candidate in candidates], self.color)
-                move = True
-                while move:
-                    chosen = int(input("give the number of your pawn of choice: "))
-                    try:
-                        for candidate in candidates:
-                            if candidate.index == chosen:
-                                chosen = candidate
-                        chosen.move(moves)
-                        move = False
-
-                    except:
-                        print("wrong input")
 
             if chosen and (moves == 6 or chosen.finished):
                 again = True
@@ -61,7 +41,7 @@ class Player:
             if chosen and chosen.finished:
                 strikes = 0
 
-        return strikes, again, reawrd
+        return strikes, again, chosen, reward
 
     def update(self):
         self.starting.reset()

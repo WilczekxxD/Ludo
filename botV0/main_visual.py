@@ -3,8 +3,10 @@ from ludo.indicator import Indicator
 import pygame
 import ludo.dice as dice
 from ludo.board import Board
-from ludo.player import Player
+from agentV0 import Player
 import numpy as np
+import neat
+import os
 clock = pygame.time.Clock()
 pygame.init()
 pygame.font.init()
@@ -13,7 +15,7 @@ myfont = pygame.font.SysFont('Comic Sans MS', 30)
 frame_rate = 30
 
 
-def main():
+def main(genomes, config):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -34,105 +36,136 @@ def main():
         g.fitness = 0
         ge.append(g)
 
-    for x in range(int(len(ge))/4):
-        # one round of a tournament,
-        # not checking if ge devidible by 4 so population should be a power of 4
-        for game in range(4):
-            # making one set of genomes play eachother multiple times so as to decrease luck factor
-            # creating board
-            board = Board(win, win_side, margin)
-            # creating players
-            players = [Player(colors[i], teams[i], board.starts[i], board.finish_lines[i]) for i in range(4)]
+    while not ge == 1:
+        advancing_ge  = []
+        advancing_nets = []
+        for x in range(int(len(ge)/4)):
+            # one round of a tournament,
+            # not checking if ge devidible by 4 so population should be a power of 4
+            # points for following who wins and goes on
+            points = [0, 0, 0, 0]
+            for game in range(4):
+                # making one set of genomes play eachother multiple times so as to decrease luck factor
+                # creating board
+                board = Board(win, win_side, margin)
+                # creating players
+                players = [Player(colors[i], teams[i], board.starts[i], board.finish_lines[i]) for i in range(4)]
 
-            # creating indicators
-            r = (win_side-2*margin)/30
-            indicators = []
-            indicators.append(Indicator(win, colors[0], r, (win_side - 2 * margin - r), r))
-            indicators.append(Indicator(win, colors[1], r, r, r))
-            indicators.append(Indicator(win, colors[2], (win_side - 2 * margin - r), r, r))
-            indicators.append(Indicator(win, colors[3], (win_side - 2 * margin - r), (win_side - 2 * margin - r), r))
+                # creating indicators
+                r = (win_side-2*margin)/30
+                indicators = []
+                indicators.append(Indicator(win, colors[0], r, (win_side - 2 * margin - r), r))
+                indicators.append(Indicator(win, colors[1], r, r, r))
+                indicators.append(Indicator(win, colors[2], (win_side - 2 * margin - r), r, r))
+                indicators.append(Indicator(win, colors[3], (win_side - 2 * margin - r), (win_side - 2 * margin - r), r))
 
-            i = 0
-            end = False
-            while not end:
+                i = 0
+                end = False
+                while not end:
 
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-
-                playing = players[i]
-                strikes = 0
-                again = True
-                # this is used to make multiple moves of one player possible
-                while again:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             pygame.quit()
-                    board.draw()
-                    indicators[i].on()
-                    pygame.display.update()
 
-                    clock.tick(frame_rate)
-                    print(f"move of player {playing.team} on strike {strikes}")
-                    moves = dice.throw()
-                    print(f"moves {moves}")
-                    # playing player moving
-                    # activating net of x + indx of player from ge
-                    # activating by position of every pawn
-
-                    output = nets[x + i].activate(moves, playing.pawns[0].position, playing.pawns[1].position,
-                                                  playing.pawns[2].position, playing.pawns[3].position,
-
-                                                  players[(i + 1) % 4].pawns[0].position,
-                                                  players[(i + 1) % 4].pawns[1].position,
-                                                  players[(i + 1) % 4].pawns[2].position,
-                                                  players[(i + 1) % 4].pawns[3].position,
-
-                                                  players[(i + 2) % 4].pawns[0].position,
-                                                  players[(i + 2) % 4].pawns[1].position,
-                                                  players[(i + 2) % 4].pawns[2].position,
-                                                  players[(i + 2) % 4].pawns[3].position,
-
-                                                  players[(i + 3) % 4].pawns[0].position,
-                                                  players[(i + 3) % 4].pawns[1].position,
-                                                  players[(i + 3) % 4].pawns[2].position,
-                                                  players[(i + 3) % 4].pawns[3].position,
-                                                  )
-                    chosen = playing.pawns[np.argmax(output)]
-                    strikes, again = playing.move(strikes)
-
-                    # conflicts
-                    if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
-                        again = True
-                        strikes = 0
-
-                    # moves pawns back into starting positions if they were taken out and updates finish lines
-                    for player in players:
-                        player.update()
-
-                    # after moving and conflicts updating path since final and starting where updated before
-
-                    on_board = []
-                    for player in players:
-                        for pawn in player.pawns:
-                            if pawn.position != -1 and not pawn.finishing and not pawn.finished:
-                                on_board.append(pawn)
-
-                    board.path.update(on_board)
-
-                    # checking if someone won and ending the game
-                    status = [pawn.finished for pawn in playing.pawns]
-                    if all(status):
-                        end = True
+                    playing = players[i]
+                    strikes = 0
+                    again = True
+                    # this is used to make multiple moves of one player possible
+                    while again:
                         again = False
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                        board.draw()
+                        indicators[i].on()
+                        pygame.display.update()
 
-                    # printing the board
-                    board.draw()
-                    indicators[i].off()
-                    pygame.display.update()
-                    time.sleep(1)
-                i += 1
-                i = i % 4
+                        clock.tick(frame_rate)
+                        print(f"move of player {playing.team} on strike {strikes}")
+                        moves = dice.throw()
+                        print(f"moves {moves}")
+                        # playing player moving
+                        # activating net of x + indx of player from ge
+                        # activating by position of every pawn
+                        candidates = []
+                        chosen = False
+                        for pawn in playing.pawns:
+                            pawn.movable(moves)
+                            if pawn.possible or (pawn.position == -1 and moves == 6):
+                                candidates.append(pawn)
+                        print(len(candidates))
+                        if len(candidates) > 1:
+                            output = nets[x + i].activate((moves, playing.pawns[0].position, playing.pawns[1].position,
+                                                          playing.pawns[2].position, playing.pawns[3].position,
+
+                                                          players[(i + 1) % 4].pawns[0].position,
+                                                          players[(i + 1) % 4].pawns[1].position,
+                                                          players[(i + 1) % 4].pawns[2].position,
+                                                          players[(i + 1) % 4].pawns[3].position,
+
+                                                          players[(i + 2) % 4].pawns[0].position,
+                                                          players[(i + 2) % 4].pawns[1].position,
+                                                          players[(i + 2) % 4].pawns[2].position,
+                                                          players[(i + 2) % 4].pawns[3].position,
+
+                                                          players[(i + 3) % 4].pawns[0].position,
+                                                          players[(i + 3) % 4].pawns[1].position,
+                                                          players[(i + 3) % 4].pawns[2].position,
+                                                          players[(i + 3) % 4].pawns[3].position,
+                                                          ))
+                            chosen = playing.pawns[np.argmax(output)]
+                            print(chosen)
+                            strikes, again, chosen, reward = playing.move(strikes, moves, chosen, candidates)
+
+                            # adding rewards for quality of moves, ex. where they legal
+                            ge[x+i].fitness += reward
+                        elif len(candidates) == 1:
+                            print("moving")
+                            chosen = candidates[0]
+                            chosen.move(moves)
+
+                        # conflicts
+                        if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
+                            print("again becouse conflict")
+                            again = True
+                            strikes = 0
+
+                        # moves pawns back into starting positions if they were taken out and updates finish lines
+                        for player in players:
+                            player.update()
+
+                        # after moving and conflicts updating path since final and starting where updated before
+
+                        on_board = []
+                        for player in players:
+                            for pawn in player.pawns:
+                                if pawn.position != -1 and not pawn.finishing and not pawn.finished:
+                                    on_board.append(pawn)
+
+                        board.path.update(on_board)
+
+                        # checking if someone won and ending the game
+                        status = [pawn.finished for pawn in playing.pawns]
+                        if all(status):
+                            end = True
+                            again = False
+                            points[i] += 1
+
+                        # printing the board
+                        board.draw()
+                        indicators[i].off()
+                        pygame.display.update()
+                        time.sleep(1)
+                    i += 1
+                    i = i % 4
+
+            winner = np.argmax(points)
+            advancing_ge.append(ge[winner])
+            advancing_nets.append(nets[winner])
+        for g in advancing_ge:
+            g.fitness += 20
+        ge = advancing_ge
+        nets = advancing_nets
 
 
 def run(config_path):
@@ -153,5 +186,5 @@ def run(config_path):
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "ConfigV0.txt")
+    config_path = os.path.join(local_dir, "configV0.txt")
     run(config_path)
