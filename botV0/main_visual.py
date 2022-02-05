@@ -36,8 +36,9 @@ def main(genomes, config):
         g.fitness = 0
         ge.append(g)
 
-    while not ge == 1:
-        advancing_ge  = []
+    print(len(ge))
+    while not len(ge) == 1:
+        advancing_ge = []
         advancing_nets = []
         for x in range(int(len(ge)/4)):
             # one round of a tournament,
@@ -50,15 +51,7 @@ def main(genomes, config):
                 board = Board(win, win_side, margin)
                 # creating players
                 players = [Player(colors[i], teams[i], board.starts[i], board.finish_lines[i]) for i in range(4)]
-
-                # creating indicators
-                r = (win_side-2*margin)/30
-                indicators = []
-                indicators.append(Indicator(win, colors[0], r, (win_side - 2 * margin - r), r))
-                indicators.append(Indicator(win, colors[1], r, r, r))
-                indicators.append(Indicator(win, colors[2], (win_side - 2 * margin - r), r, r))
-                indicators.append(Indicator(win, colors[3], (win_side - 2 * margin - r), (win_side - 2 * margin - r), r))
-
+                print(f"game {game}")
                 i = 0
                 end = False
                 while not end:
@@ -77,13 +70,10 @@ def main(genomes, config):
                             if event.type == pygame.QUIT:
                                 pygame.quit()
                         board.draw()
-                        indicators[i].on()
                         pygame.display.update()
 
                         clock.tick(frame_rate)
-                        print(f"move of player {playing.team} on strike {strikes}")
                         moves = dice.throw()
-                        print(f"moves {moves}")
                         # playing player moving
                         # activating net of x + indx of player from ge
                         # activating by position of every pawn
@@ -93,7 +83,6 @@ def main(genomes, config):
                             pawn.movable(moves)
                             if pawn.possible or (pawn.position == -1 and moves == 6):
                                 candidates.append(pawn)
-                        print(len(candidates))
                         if len(candidates) > 1:
                             output = nets[x + i].activate((moves, playing.pawns[0].position, playing.pawns[1].position,
                                                           playing.pawns[2].position, playing.pawns[3].position,
@@ -114,19 +103,16 @@ def main(genomes, config):
                                                           players[(i + 3) % 4].pawns[3].position,
                                                           ))
                             chosen = playing.pawns[np.argmax(output)]
-                            print(chosen)
                             strikes, again, chosen, reward = playing.move(strikes, moves, chosen, candidates)
 
                             # adding rewards for quality of moves, ex. where they legal
                             ge[x+i].fitness += reward
                         elif len(candidates) == 1:
-                            print("moving")
                             chosen = candidates[0]
                             chosen.move(moves)
 
                         # conflicts
                         if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
-                            print("again becouse conflict")
                             again = True
                             strikes = 0
 
@@ -153,9 +139,7 @@ def main(genomes, config):
 
                         # printing the board
                         board.draw()
-                        indicators[i].off()
                         pygame.display.update()
-                        time.sleep(1)
                     i += 1
                     i = i % 4
 
