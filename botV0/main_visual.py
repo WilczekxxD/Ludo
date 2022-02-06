@@ -16,6 +16,7 @@ frame_rate = 30
 
 
 def main(genomes, config):
+    # setting up pygame
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -27,7 +28,7 @@ def main(genomes, config):
 
     nets = []
     ge = []
-
+    print(len(genomes))
     for _, g in genomes:
         # setting up genomes, connecting them and appending to the genome list named ge
 
@@ -41,8 +42,9 @@ def main(genomes, config):
         advancing_ge = []
         advancing_nets = []
         for x in range(int(len(ge)/4)):
+            print(x)
             # one round of a tournament,
-            # not checking if ge devidible by 4 so population should be a power of 4
+            # not checking if ge devisible by 4 so population should be a power of 4
             # points for following who wins and goes on
             points = [0, 0, 0, 0]
             for game in range(4):
@@ -146,6 +148,7 @@ def main(genomes, config):
             winner = np.argmax(points)
             advancing_ge.append(ge[winner])
             advancing_nets.append(nets[winner])
+            print(f"advancing genomes {len(advancing_ge)}")
         for g in advancing_ge:
             g.fitness += 20
         ge = advancing_ge

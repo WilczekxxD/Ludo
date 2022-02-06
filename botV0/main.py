@@ -27,6 +27,7 @@ def main(genomes, config):
         nets.append(net)
         g.fitness = 0
         ge.append(g)
+
     while not len(ge) == 1:
         advancing_ge = []
         advancing_nets = []

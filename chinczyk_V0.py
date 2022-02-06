@@ -94,7 +94,7 @@ def run(config_path):
     # showing stats instead of black running screan
 
     p.add_reporter(neat.StdOutReporter(True))
-    stats = neat.StatisticsReporter
+    stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
     winner = p.run(main, 200)
