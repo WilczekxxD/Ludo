@@ -10,8 +10,6 @@ import os
 clock = pygame.time.Clock()
 pygame.init()
 pygame.font.init()
-myfont = pygame.font.SysFont('Comic Sans MS', 30)
-
 frame_rate = 30
 
 
@@ -28,8 +26,7 @@ def main(genomes, config):
 
     nets = []
     ge = []
-    print(len(genomes))
-    for _, g in genomes:
+    for id, g in genomes:
         # setting up genomes, connecting them and appending to the genome list named ge
 
         net = neat.nn.FeedForwardNetwork.create(g, config)
@@ -37,12 +34,11 @@ def main(genomes, config):
         g.fitness = 0
         ge.append(g)
 
-    print(len(ge))
-    while not len(ge) == 1:
+    while not len(ge) < 4:
         advancing_ge = []
         advancing_nets = []
-        for x in range(int(len(ge)/4)):
-            print(x)
+        for j in range(int(len(ge)/4)):
+            x = 0 + 4 * j
             # one round of a tournament,
             # not checking if ge devisible by 4 so population should be a power of 4
             # points for following who wins and goes on
@@ -53,7 +49,6 @@ def main(genomes, config):
                 board = Board(win, win_side, margin)
                 # creating players
                 players = [Player(colors[i], teams[i], board.starts[i], board.finish_lines[i]) for i in range(4)]
-                print(f"game {game}")
                 i = 0
                 end = False
                 while not end:
@@ -148,7 +143,7 @@ def main(genomes, config):
             winner = np.argmax(points)
             advancing_ge.append(ge[winner])
             advancing_nets.append(nets[winner])
-            print(f"advancing genomes {len(advancing_ge)}")
+
         for g in advancing_ge:
             g.fitness += 20
         ge = advancing_ge
@@ -157,8 +152,8 @@ def main(genomes, config):
 
 def run(config_path):
     # those match the topic in configuration file, those names down there,
-    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                                neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                         neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
 
     p = neat.Population(config)
 
@@ -168,10 +163,11 @@ def run(config_path):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main, 200)
+    winner = p.run(main, 500)
+    print('\nBest genome:\n{!s}'.format(winner))
 
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "configV0.txt")
+    config_path = os.path.join(local_dir, 'configV0.txt')
     run(config_path)

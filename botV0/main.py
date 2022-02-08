@@ -7,10 +7,9 @@ import numpy as np
 import neat
 import os
 
-frame_rate = 30
-
 
 def main(genomes, config):
+
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
     teams = [0, 1, 2, 3]
     win_side = 610
@@ -19,8 +18,7 @@ def main(genomes, config):
 
     nets = []
     ge = []
-
-    for _, g in genomes:
+    for id, g in genomes:
         # setting up genomes, connecting them and appending to the genome list named ge
 
         net = neat.nn.FeedForwardNetwork.create(g, config)
@@ -28,12 +26,14 @@ def main(genomes, config):
         g.fitness = 0
         ge.append(g)
 
-    while not len(ge) == 1:
+    while not len(ge) < 4:
         advancing_ge = []
         advancing_nets = []
-        for x in range(int(len(ge)/4)):
+
+        for j in range(int(len(ge)/4)):
+            x = 0 + 4 * j
             # one round of a tournament,
-            # not checking if ge devidible by 4 so population should be a power of 4
+            # not checking if ge devisible by 4 so population should be a power of 4
             # points for following who wins and goes on
             points = [0, 0, 0, 0]
             for game in range(4):
@@ -42,7 +42,6 @@ def main(genomes, config):
                 board = Board(win, win_side, margin)
                 # creating players
                 players = [Player(colors[i], teams[i], board.starts[i], board.finish_lines[i]) for i in range(4)]
-
                 i = 0
                 end = False
                 while not end:
@@ -116,12 +115,14 @@ def main(genomes, config):
                             end = True
                             again = False
                             points[i] += 1
+
                     i += 1
                     i = i % 4
 
             winner = np.argmax(points)
             advancing_ge.append(ge[winner])
             advancing_nets.append(nets[winner])
+
         for g in advancing_ge:
             g.fitness += 20
         ge = advancing_ge
@@ -130,8 +131,8 @@ def main(genomes, config):
 
 def run(config_path):
     # those match the topic in configuration file, those names down there,
-    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                                neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                         neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
 
     p = neat.Population(config)
 
@@ -141,10 +142,11 @@ def run(config_path):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main, 200)
+    winner = p.run(main)
+    print('\nBest genome:\n{!s}'.format(winner))
 
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "configV0.txt")
+    config_path = os.path.join(local_dir, 'configV0.txt')
     run(config_path)

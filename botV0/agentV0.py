@@ -28,9 +28,7 @@ class Player:
 
         if strikes != 3:
             if len(candidates) != 0:
-                if chosen in candidates:
-                    reward += 2
-                else:
+                if not (chosen in candidates):
                     reward -= 2
                     chosen = candidates[0]
                 chosen.move(moves)
