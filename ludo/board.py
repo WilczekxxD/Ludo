@@ -1,7 +1,7 @@
 import time
 from ludo.field import Field
 from ludo.path import Path
-from ludo.final import  Final
+from ludo.final import Final
 from ludo.starting import Starting
 import pygame
 from colorama import Fore, init
@@ -13,11 +13,13 @@ pygame.init()
 class Board:
 
     def __init__(self, win, side, margin,):
+        # for drawing
         self.side = side
         self.colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
         self.margin = margin
         self.grid_side = (self.side - self.margin * 2) / 15
         self.win = win
+        # logic
         self.path = Path(self.win, self.side, self.margin)
         self.finish_lines = []
         self.create_final()
