@@ -141,6 +141,7 @@ def run(config_path):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
+    p.add_reporter(neat.Checkpointer(500))
 
     winner = p.run(main)
     print('\nBest genome:\n{!s}'.format(winner))
