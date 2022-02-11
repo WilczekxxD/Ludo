@@ -70,46 +70,72 @@ def main(genomes, config):
                             if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
                                 again = True
                                 strikes = 0
-                        else:
+                        elif len(candidates) > 1:
                             states = []
                             for candidate in candidates:
-                                state = []
+                                # cooping strikes
+                                c_strikes = strikes
                                 # creating and moving a copy of a pawn not to disrupt the original game
                                 chosen = Pawn(candidate.color, candidate.team, candidate.index)
                                 chosen.move(moves)
+                                # checking for conflicts
                                 conflict, potential_casualties = board.path.find_conflictsV1(chosen)
+                                # creating state
+                                state = []
+                                for k in range(16):
+                                    pawn = players[(i + k // 4) % 4].pawns[k % 4]
+                                    # if conflict and in potential casualties pawn should be teleported to the beggining
+                                    # but since we do not actually move pawns just inserting -1 into state
+                                    if conflict and pawn in potential_casualties:
+                                        state.append(-1)
+                                    elif pawn.finishing != 0:
+                                        state.append(pawn.position + 52)
+                                    else:
+                                        state.append(pawn.position)
 
-                                # conflicts
+                                # changing strikes if need be, but only a copy
                                 if chosen and (chosen.finished or conflict):
-                                    again = True
-                                    strikes = 0
+                                    c_again = True
+                                    c_strikes = 0
 
+                                state = tuple(state + [strikes])
+                                states.append(state)
 
+                            # getting output from net for every state
+                            outputs = [nets[x + i].activate(state) for state in states]
+                            index = np.argmax(outputs)
 
+                            # choosing and moving the choice, this already has impact on the game
+                            candidates[index].move(moves)
 
-                        # moves pawns back into starting positions if they were taken out and updates finish lines
-                        for player in players:
-                            player.update()
+                            # actual conflict resolution
+                            if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
+                                again = True
+                                strikes = 0
 
-                        # after moving and conflicts updating path since final and starting where updated before
+                            # moves pawns back into starting positions if they were taken out and updates finish lines
+                            for player in players:
+                                player.update()
 
-                        on_board = []
-                        for player in players:
-                            for pawn in player.pawns:
-                                if pawn.position != -1 and not pawn.finishing and not pawn.finished:
-                                    on_board.append(pawn)
+                            # after moving and conflicts updating path since final and starting where updated before
 
-                        board.path.update(on_board)
+                            on_board = []
+                            for player in players:
+                                for pawn in player.pawns:
+                                    if pawn.position != -1 and not pawn.finishing and not pawn.finished:
+                                        on_board.append(pawn)
 
-                        # checking if someone won and ending the game
-                        status = [pawn.finished for pawn in playing.pawns]
-                        if all(status):
-                            end = True
-                            again = False
-                            points[i] += 1
+                            board.path.update(on_board)
 
-                        if strikes >= 3:
-                            again = False
+                            # checking if someone won and ending the game
+                            status = [pawn.finished for pawn in playing.pawns]
+                            if all(status):
+                                end = True
+                                again = False
+                                points[i] += 1
+
+                            if strikes >= 3:
+                                again = False
 
                     i += 1
                     i = i % 4
