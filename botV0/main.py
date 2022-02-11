@@ -31,7 +31,7 @@ def main(genomes, config):
         advancing_nets = []
 
         for j in range(int(len(ge)/4)):
-            x = 0 + 4 * j
+            x = 4 * j
             # one round of a tournament,
             # not checking if ge devisible by 4 so population should be a power of 4
             # points for following who wins and goes on
@@ -109,7 +109,7 @@ def main(genomes, config):
                     i += 1
                     i = i % 4
 
-            winner = np.argmax(points)
+            winner = x + np.argmax(points)
             advancing_ge.append(ge[winner])
             advancing_nets.append(nets[winner])
 

@@ -179,7 +179,7 @@ def main(genomes, config):
                     i += 1
                     i = i % 4
 
-            winner = np.argmax(points)
+            winner = x + np.argmax(points)
             advancing_ge.append(ge[winner])
             advancing_nets.append(nets[winner])
 
