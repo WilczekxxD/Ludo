@@ -19,6 +19,7 @@ class Board:
         self.margin = margin
         self.grid_side = (self.side - self.margin * 2) / 15
         self.win = win
+        
         # logic
         self.path = Path(self.win, self.side, self.margin)
         self.finish_lines = []
