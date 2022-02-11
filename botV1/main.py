@@ -1,8 +1,9 @@
 import time
 from ludo.indicator import Indicator
 import ludo.dice as dice
-from ludo.board import Board
+from botV1.boardV1 import Board
 from agentV1 import Player
+from ludo.pawn import Pawn
 import numpy as np
 import neat
 import os
@@ -66,12 +67,25 @@ def main(genomes, config):
                         if len(candidates) == 1:
                             chosen = candidates[0]
                             chosen.move(moves)
+                            if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
+                                again = True
+                                strikes = 0
+                        else:
+                            states = []
+                            for candidate in candidates:
+                                state = []
+                                # creating and moving a copy of a pawn not to disrupt the original game
+                                chosen = Pawn(candidate.color, candidate.team, candidate.index)
+                                chosen.move(moves)
+                                conflict, potential_casualties = board.path.find_conflictsV1(chosen)
+
+                                # conflicts
+                                if chosen and (chosen.finished or conflict):
+                                    again = True
+                                    strikes = 0
 
 
-                        # conflicts
-                        if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
-                            again = True
-                            strikes = 0
+
 
                         # moves pawns back into starting positions if they were taken out and updates finish lines
                         for player in players:
@@ -93,6 +107,9 @@ def main(genomes, config):
                             end = True
                             again = False
                             points[i] += 1
+
+                        if strikes >= 3:
+                            again = False
 
                     i += 1
                     i = i % 4
