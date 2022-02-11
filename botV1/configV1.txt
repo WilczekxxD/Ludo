@@ -8,9 +8,9 @@ reset_on_extinction   = False
 
 [DefaultGenome]
 # node activation options
-activation_default      = tanh
-activation_mutate_rate  = 0.2
-activation_options      = tanh
+activation_default      = identity
+activation_mutate_rate  = 0.1
+activation_options      = [clamped, cube, exp, identity, log, relu, elu, lelu, selu, sigmoid, softplus, tanh]
 
 # node aggregation options
 aggregation_default     = sum

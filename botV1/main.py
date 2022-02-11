@@ -88,10 +88,11 @@ def main(genomes, config):
                                     # but since we do not actually move pawns just inserting -1 into state
                                     if conflict and pawn in potential_casualties:
                                         state.append(-1)
-                                    elif pawn.finishing != 0:
+                                    elif pawn.finishing == 1:
                                         state.append(pawn.position + 52)
                                     else:
                                         state.append(pawn.position)
+
 
                                 # changing strikes if need be, but only a copy
                                 if chosen and (chosen.finished or conflict):

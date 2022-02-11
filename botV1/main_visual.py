@@ -1,12 +1,14 @@
 import time
 from ludo.indicator import Indicator
-import pygame
 import ludo.dice as dice
-from ludo.board import Board
+from botV1.boardV1 import Board
 from agentV1 import Player
+from ludo.pawn import Pawn
 import numpy as np
 import neat
 import os
+import pygame
+
 clock = pygame.time.Clock()
 pygame.init()
 pygame.font.init()
@@ -14,10 +16,7 @@ frame_rate = 30
 
 
 def main(genomes, config):
-    # setting up pygame
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
+
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
     teams = [0, 1, 2, 3]
     win_side = 610
@@ -37,6 +36,7 @@ def main(genomes, config):
     while not len(ge) < 4:
         advancing_ge = []
         advancing_nets = []
+
         for j in range(int(len(ge)/4)):
             x = 0 + 4 * j
             # one round of a tournament,
@@ -53,24 +53,27 @@ def main(genomes, config):
                 end = False
                 while not end:
 
-                    for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                            pygame.quit()
-
                     playing = players[i]
                     strikes = 0
                     again = True
                     # this is used to make multiple moves of one player possible
                     while again:
-                        again = False
+                        # pygame stuff
                         for event in pygame.event.get():
                             if event.type == pygame.QUIT:
                                 pygame.quit()
                         board.draw()
                         pygame.display.update()
-
                         clock.tick(frame_rate)
+
+                        # adding ability to pouse the game under p
+                        pressed = pygame.key.get_pressed()
+                        if pressed[pygame.K_p]:
+                            time.sleep(1)
+
+                        again = False
                         moves = dice.throw()
+                        print(i, strikes, moves)
                         # playing player moving
                         # activating net of x + indx of player from ge
                         # activating by position of every pawn
@@ -80,54 +83,80 @@ def main(genomes, config):
                             pawn.movable(moves)
                             if pawn.possible or (pawn.position == -1 and moves == 6):
                                 candidates.append(pawn)
-                        if len(candidates) > 1:
-                            output = nets[x + i].activate((moves, playing.pawns[0].position, playing.pawns[1].position,
-                                                          playing.pawns[2].position, playing.pawns[3].position,
 
-                                                          players[(i + 1) % 4].pawns[0].position,
-                                                          players[(i + 1) % 4].pawns[1].position,
-                                                          players[(i + 1) % 4].pawns[2].position,
-                                                          players[(i + 1) % 4].pawns[3].position,
-
-                                                          players[(i + 2) % 4].pawns[0].position,
-                                                          players[(i + 2) % 4].pawns[1].position,
-                                                          players[(i + 2) % 4].pawns[2].position,
-                                                          players[(i + 2) % 4].pawns[3].position,
-
-                                                          players[(i + 3) % 4].pawns[0].position,
-                                                          players[(i + 3) % 4].pawns[1].position,
-                                                          players[(i + 3) % 4].pawns[2].position,
-                                                          players[(i + 3) % 4].pawns[3].position,
-                                                          ))
-                            chosen = playing.pawns[np.argmax(output)]
-                            strikes, again, chosen, reward = playing.move(strikes, moves, chosen, candidates)
-
-                            # adding rewards for quality of moves, ex. where they legal
-                            ge[x+i].fitness += reward
-                        elif len(candidates) == 1:
+                        if len(candidates) == 1:
                             chosen = candidates[0]
                             chosen.move(moves)
+                            if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
+                                again = True
+                                strikes = 0
+                        elif len(candidates) > 1:
+                            states = []
+                            for candidate in candidates:
+                                # cooping strikes
+                                c_strikes = strikes
+                                # creating and moving a copy of a pawn not to disrupt the original game
+                                chosen = Pawn(candidate.color, candidate.team, candidate.index)
+                                chosen.move(moves)
+                                # checking for conflicts
+                                conflict, potential_casualties = board.path.find_conflictsV1(chosen)
+                                # creating state
+                                state = []
+                                for k in range(16):
+                                    pawn = players[(i + k // 4) % 4].pawns[k % 4]
+                                    # if conflict and in potential casualties pawn should be teleported to the beggining
+                                    # but since we do not actually move pawns just inserting -1 into state
+                                    if conflict and pawn in potential_casualties:
+                                        state.append(-1)
+                                    elif pawn.finishing == 1:
+                                        state.append(pawn.position + 52)
+                                    else:
+                                        state.append(pawn.position)
 
-                        # conflicts
-                        if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
-                            again = True
-                            strikes = 0
+                                # changing strikes if need be, but only a copy
+                                if chosen and (chosen.finished or conflict):
+                                    c_strikes = 0
 
-                        # moves pawns back into starting positions if they were taken out and updates finish lines
-                        for player in players:
-                            player.update()
+                                state = tuple(state + [c_strikes])
+                                states.append(state)
 
-                        # after moving and conflicts updating path since final and starting where updated before
+                            # getting output from net for every state
+                            outputs = [nets[x + i].activate(state) for state in states]
+                            index = np.argmax(outputs)
+                            print(f"outputs: {outputs}\n states:{states}")
 
-                        on_board = []
-                        for player in players:
-                            for pawn in player.pawns:
-                                if pawn.position != -1 and not pawn.finishing and not pawn.finished:
-                                    on_board.append(pawn)
+                            # choosing and moving the choice, this already has impact on the game
+                            candidates[index].move(moves)
 
-                        board.path.update(on_board)
+                            # actual conflict resolution
+                            if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
+                                again = True
+                                strikes = 0
 
-                        # checking if someone won and ending the game
+                            # moves pawns back into starting positions if they were taken out and updates finish lines
+                            for player in players:
+                                player.update()
+
+                            # after moving and conflicts updating path since final and starting where updated before
+
+                            on_board = []
+                            for player in players:
+                                for pawn in player.pawns:
+                                    if pawn.position != -1 and not pawn.finishing and not pawn.finished:
+                                        on_board.append(pawn)
+
+                            board.path.update(on_board)
+
+                            # checking if someone won and ending the game
+                            status = [pawn.finished for pawn in playing.pawns]
+                            if all(status):
+                                end = True
+                                again = False
+                                points[i] += 1
+
+                            if strikes >= 3:
+                                again = False
+
                         status = [pawn.finished for pawn in playing.pawns]
                         if all(status):
                             end = True
@@ -163,7 +192,7 @@ def run(config_path):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main, 500)
+    winner = p.run(main)
     print('\nBest genome:\n{!s}'.format(winner))
 
 
