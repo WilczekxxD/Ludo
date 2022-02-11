@@ -9,6 +9,7 @@ import neat
 import os
 
 
+
 def main(genomes, config):
 
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
@@ -52,6 +53,7 @@ def main(genomes, config):
                     again = True
                     # this is used to make multiple moves of one player possible
                     while again:
+
                         again = False
                         moves = dice.throw()
                         # playing player moving
@@ -64,53 +66,58 @@ def main(genomes, config):
                             if pawn.possible or (pawn.position == -1 and moves == 6):
                                 candidates.append(pawn)
 
-                        if len(candidates) == 1:
-                            chosen = candidates[0]
-                            chosen.move(moves)
-                            if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
-                                again = True
-                                strikes = 0
-                        elif len(candidates) > 1:
-                            states = []
-                            for candidate in candidates:
-                                # cooping strikes
-                                c_strikes = strikes
-                                # creating and moving a copy of a pawn not to disrupt the original game
-                                chosen = Pawn(candidate.color, candidate.team, candidate.index)
+                        if len(candidates) > 0:
+                            if len(candidates) == 1:
+                                chosen = candidates[0]
                                 chosen.move(moves)
-                                # checking for conflicts
-                                conflict, potential_casualties = board.path.find_conflictsV1(chosen)
-                                # creating state
-                                state = []
-                                for k in range(16):
-                                    pawn = players[(i + k // 4) % 4].pawns[k % 4]
-                                    # if conflict and in potential casualties pawn should be teleported to the beggining
-                                    # but since we do not actually move pawns just inserting -1 into state
-                                    if conflict and pawn in potential_casualties:
-                                        state.append(-1)
-                                    elif pawn.finishing == 1:
-                                        state.append(pawn.position + 52)
-                                    else:
-                                        state.append(pawn.position)
 
+                            elif len(candidates) > 1:
+                                states = []
+                                # this is a loop which creates a set of dummy states
+                                for candidate in candidates:
+                                    # cooping strikes
+                                    c_strikes = strikes
+                                    # creating and moving a copy of a pawn not to disrupt the original game
+                                    chosen = Pawn(candidate.color, candidate.team, candidate.index)
+                                    chosen.position = int(candidate.position)
+                                    chosen.possible = True
+                                    chosen.move(moves)
+                                    # checking for conflicts
+                                    conflict, potential_casualties = board.path.find_conflictsV1(chosen)
+                                    # creating state
+                                    state = []
+                                    for k in range(16):
+                                        pawn = players[(i + k // 4) % 4].pawns[k % 4]
+                                        # if conflict and in potential casualties pawn should be teleported
+                                        # to the beggining
+                                        # but since we do not actually move pawns just inserting -1 into state
+                                        if conflict and pawn in potential_casualties:
+                                            state.append(-1)
+                                        elif pawn.finishing == 1:
+                                            state.append(pawn.position + 52)
+                                        # this pawn is the one moved in this scenario therefore value of the copy is
+                                        # different from this of the actual pawn
+                                        elif pawn in playing.pawns and pawn.index == chosen.index:
+                                            state.append(chosen.position)
+                                        else:
+                                            state.append(pawn.position)
+                                    # changing strikes if need be, but only a copy
+                                    if chosen and (chosen.finished or conflict):
+                                        c_strikes = 0
 
-                                # changing strikes if need be, but only a copy
-                                if chosen and (chosen.finished or conflict):
-                                    c_again = True
-                                    c_strikes = 0
+                                    state = tuple(state + [c_strikes])
+                                    states.append(state)
 
-                                state = tuple(state + [strikes])
-                                states.append(state)
+                                # getting output from net for every state
+                                outputs = [nets[x + i].activate(state) for state in states]
+                                index = np.argmax(outputs)
 
-                            # getting output from net for every state
-                            outputs = [nets[x + i].activate(state) for state in states]
-                            index = np.argmax(outputs)
-
-                            # choosing and moving the choice, this already has impact on the game
-                            candidates[index].move(moves)
+                                # choosing and moving the choice, this already has impact on the game
+                                chosen = candidates[index]
+                                chosen.move(moves)
 
                             # actual conflict resolution
-                            if chosen and (chosen.finished or board.path.find_conflicts(chosen)):
+                            if chosen.finished or board.path.find_conflicts(chosen):
                                 again = True
                                 strikes = 0
 
@@ -119,7 +126,6 @@ def main(genomes, config):
                                 player.update()
 
                             # after moving and conflicts updating path since final and starting where updated before
-
                             on_board = []
                             for player in players:
                                 for pawn in player.pawns:
@@ -128,6 +134,12 @@ def main(genomes, config):
 
                             board.path.update(on_board)
 
+                            # checking if again previously handled but player.move but in this version
+                            # it just does not make sense
+                            if moves == 6:
+                                strikes += 1
+                                again = True
+
                             # checking if someone won and ending the game
                             status = [pawn.finished for pawn in playing.pawns]
                             if all(status):
@@ -135,13 +147,16 @@ def main(genomes, config):
                                 again = False
                                 points[i] += 1
 
-                            if strikes >= 3:
-                                again = False
+                        status = [pawn.finished for pawn in playing.pawns]
+                        if all(status):
+                            end = True
+                            again = False
+                            points[i] += 1
 
                     i += 1
                     i = i % 4
 
-            winner = np.argmax(points)
+            winner = x + np.argmax(points)
             advancing_ge.append(ge[winner])
             advancing_nets.append(nets[winner])
 
@@ -164,7 +179,7 @@ def run(config_path):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main)
+    winner = p.run(main, 10000)
     print('\nBest genome:\n{!s}'.format(winner))
 
 
