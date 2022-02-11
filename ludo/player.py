@@ -54,7 +54,6 @@ class Player:
                     except:
                         print("wrong input")
 
-
             if chosen and (moves == 6 or chosen.finished):
                 again = True
 
