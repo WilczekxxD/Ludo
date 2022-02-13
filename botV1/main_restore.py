@@ -170,15 +170,15 @@ def run(config_path):
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
 
-    p = neat.Population(config)
+    p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-9981')
 
     # showing stats instead of black running screan
-    p.add_reporter(neat.Checkpointer(500))
+    p.add_reporter(neat.Checkpointer(100, 3600))
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main, 10000)
+    winner = p.run(main, 100000)
     print('\nBest genome:\n{!s}'.format(winner))
 
 
