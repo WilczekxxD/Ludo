@@ -166,7 +166,7 @@ def main(genomes, config):
         nets = advancing_nets
 
 
-def run(checkpoint_path):
+def run():
     p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-47')
 
     # showing stats instead of black running screan

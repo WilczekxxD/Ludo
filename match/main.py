@@ -135,9 +135,9 @@ def main(nets, matches):
             i = i % 4
 
     winner_index = np.argmax(points)
-    #print(f"winner has index: {winner_index}\npoints are: {points}\n"
-     #     f"winning percatage of the winner is: {((points[winner_index])/matches) * 100}\n"
-      #    f"out of {matches}")
+    print(f"winner has index: {winner_index}\npoints are: {points}\n"
+          f"winning percatage of the winner is: {((points[winner_index])/matches) * 100}\n"
+          f"out of {matches}")
     return ((points[winner_index])/matches) * 100
 
 
@@ -145,12 +145,13 @@ def match(g1, config1, g2, config2, matches):
 
     # creating players and their nets
     nets = []
-    # creating net of the better player
-    nets.append(neat.nn.FeedForwardNetwork.create(g1, config1))
 
     # creating the rest
     for _ in range(3):
         nets.append(neat.nn.FeedForwardNetwork.create(g2, config2))
+
+    # creating net of the better player
+    nets.append(neat.nn.FeedForwardNetwork.create(g1, config1))
 
     win_rate = main(nets, matches)
 
@@ -159,4 +160,4 @@ def match(g1, config1, g2, config2, matches):
 
 if __name__ == "__main__":
     g1, config1, g2, config2 = run()
-    match(g1, config1, g2, config2, 100)
+    match(g1, config1, g2, config2, 5000)

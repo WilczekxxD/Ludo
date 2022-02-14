@@ -19,13 +19,15 @@ def compare_generations(directory):
 
     # sorting by generation
     files = sorted(files, key=lambda f: f[1])
-
+    print(files)
+    files = files[:60]
     # getting win rates
     win_rates = []
     # creating constant random opponent
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, 'config.txt')
     winner2, config2 = v1.run(config_path)
+    files = [["neat-checkpoint-47", 47]]
     for f in files:
         path = f[0]
         p = neat.Checkpointer.restore_checkpoint(path)
@@ -42,8 +44,9 @@ def compare_generations(directory):
             sub_par.append(generations[x])
     print(sub_par)
     plt.plot(generations, win_rates, 'ro')
-    plt.axis([0, 500, 0, 100])
+    plt.axis([0, 100, 0, 100])
     plt.show()
+
 
 if __name__ == "__main__":
     directory = os.path.join("..", "botv1")

@@ -3,7 +3,7 @@
 fitness_criterion     = max
 fitness_threshold = 100
 no_fitness_termination = True
-pop_size              = 4
+pop_size              = 2
 reset_on_extinction   = False
 
 [DefaultGenome]
@@ -73,7 +73,7 @@ compatibility_threshold = 3.0
 
 [DefaultStagnation]
 species_fitness_func = max
-max_stagnation = 500
+max_stagnation = 20
 species_elitism = 2
 
 [DefaultReproduction]
