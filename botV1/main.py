@@ -2,7 +2,7 @@ import time
 from ludo.indicator import Indicator
 import ludo.dice as dice
 from botV1.boardV1 import Board
-from agentV1 import Player
+from botV1.agentV1 import Player
 from ludo.pawn import Pawn
 import numpy as np
 import neat
@@ -139,13 +139,6 @@ def main(genomes, config):
                                 strikes += 1
                                 again = True
 
-                            # checking if someone won and ending the game
-                            status = [pawn.finished for pawn in playing.pawns]
-                            if all(status):
-                                end = True
-                                again = False
-                                points[i] += 1
-
                         status = [pawn.finished for pawn in playing.pawns]
                         if all(status):
                             end = True
@@ -173,13 +166,14 @@ def run(config_path):
     p = neat.Population(config)
 
     # showing stats instead of black running screan
-    p.add_reporter(neat.Checkpointer(500))
+    p.add_reporter(neat.Checkpointer(30))
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main, 10000)
+    winner = p.run(main, 1)
     print('\nBest genome:\n{!s}'.format(winner))
+    return winner, p.config
 
 
 if __name__ == "__main__":

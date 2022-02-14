@@ -6,6 +6,7 @@ from botV1.agentV1 import Player
 from ludo.pawn import Pawn
 import numpy as np
 import neat
+import botV1.main as v1
 import os
 
 
@@ -165,8 +166,8 @@ def main(genomes, config):
         nets = advancing_nets
 
 
-def run():
-    p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-28881')
+def run(checkpoint_path):
+    p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-47')
 
     # showing stats instead of black running screan
     p.add_reporter(neat.StdOutReporter(True))
@@ -176,7 +177,7 @@ def run():
     config1 = p.config
     winner1 = p.run(main, 1)
     print('\nBest genome in 1:\n{!s}'.format(winner1))
-
+    '''
     p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-47')
 
     # showing stats instead of black running screan
@@ -185,10 +186,14 @@ def run():
     p.add_reporter(stats)
     # second better contender
     config2 = p.config
-    winner2 = p.run(main)
+    '''
+    local_dir = os.path.dirname(__file__)
+    config_path = os.path.join(local_dir, 'config.txt')
+    winner2, config2 = v1.run(config_path)
+    print('\nBest genome in 1:\n{!s}'.format(winner2))
 
     return winner1, config1, winner2, config2
 
 
 if __name__ == "__main__":
-    run()
+    pass

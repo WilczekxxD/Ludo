@@ -9,6 +9,12 @@ from ludo.pawn import Pawn
 import numpy as np
 import neat
 import os
+import pygame
+
+clock = pygame.time.Clock()
+pygame.init()
+pygame.font.init()
+frame_rate = 30
 
 
 def main(nets, matches):
@@ -16,7 +22,7 @@ def main(nets, matches):
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
     teams = [0, 1, 2, 3]
     win_side = 610
-    win = 0
+    win = pygame.display.set_mode((win_side, win_side))
     margin = 5
 
     points = [0, 0, 0, 0]
@@ -37,9 +43,22 @@ def main(nets, matches):
             again = True
             # this is used to make multiple moves of one player possible
             while again:
+                # pygame stuff
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                board.draw()
+                pygame.display.update()
+                clock.tick(frame_rate)
+
+                # adding ability to pouse the game under p
+                pressed = pygame.key.get_pressed()
+                if pressed[pygame.K_p]:
+                    time.sleep(30)
 
                 again = False
                 moves = dice.throw()
+                print(i, strikes, moves)
                 # playing player moving
                 # activating net of x + indx of player from ge
                 # activating by position of every pawn
@@ -85,7 +104,7 @@ def main(nets, matches):
                                     state.append(chosen.position)
                                 else:
                                     state.append(pawn.position)
-
+                            print(f"state {state}")
                             # changing strikes if need be, but only a copy
                             if chosen and (chosen.finished or conflict):
                                 c_strikes = 0
@@ -96,6 +115,7 @@ def main(nets, matches):
                         # getting output from net for every state
                         outputs = [nets[i].activate(state) for state in states]
                         index = np.argmax(outputs)
+                        print(f"outputs: {outputs}\nstates:{states}")
 
                         # choosing and moving the choice, this already has impact on the game
                         chosen = candidates[index]
@@ -131,14 +151,16 @@ def main(nets, matches):
                     again = False
                     points[i] += 1
 
+            # printing the board
+            board.draw()
+            pygame.display.update()
             i += 1
             i = i % 4
 
     winner_index = np.argmax(points)
-    #print(f"winner has index: {winner_index}\npoints are: {points}\n"
-     #     f"winning percatage of the winner is: {((points[winner_index])/matches) * 100}\n"
-      #    f"out of {matches}")
-    return ((points[winner_index])/matches) * 100
+    print(f"winner has index: {winner_index}\npoints are: {points}\n"
+          f"winning percatage of the winner is: {((points[winner_index])/matches) * 100}\n"
+          f"out of {matches}")
 
 
 def match(g1, config1, g2, config2, matches):
@@ -152,9 +174,7 @@ def match(g1, config1, g2, config2, matches):
     for _ in range(3):
         nets.append(neat.nn.FeedForwardNetwork.create(g2, config2))
 
-    win_rate = main(nets, matches)
-
-    return win_rate
+    main(nets, matches)
 
 
 if __name__ == "__main__":
