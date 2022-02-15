@@ -31,7 +31,7 @@ def main(genomes, config):
         advancing_nets = []
 
         for j in range(int(len(ge)/4)):
-            x = 0 + 4 * j
+            x = 4 * j
             # one round of a tournament,
             # not checking if ge devisible by 4 so population should be a power of 4
             # points for following who wins and goes on
@@ -63,24 +63,15 @@ def main(genomes, config):
                             if pawn.possible or (pawn.position == -1 and moves == 6):
                                 candidates.append(pawn)
                         if len(candidates) > 1:
-                            output = nets[x + i].activate((moves, playing.pawns[0].position, playing.pawns[1].position,
-                                                          playing.pawns[2].position, playing.pawns[3].position,
-
-                                                          players[(i + 1) % 4].pawns[0].position,
-                                                          players[(i + 1) % 4].pawns[1].position,
-                                                          players[(i + 1) % 4].pawns[2].position,
-                                                          players[(i + 1) % 4].pawns[3].position,
-
-                                                          players[(i + 2) % 4].pawns[0].position,
-                                                          players[(i + 2) % 4].pawns[1].position,
-                                                          players[(i + 2) % 4].pawns[2].position,
-                                                          players[(i + 2) % 4].pawns[3].position,
-
-                                                          players[(i + 3) % 4].pawns[0].position,
-                                                          players[(i + 3) % 4].pawns[1].position,
-                                                          players[(i + 3) % 4].pawns[2].position,
-                                                          players[(i + 3) % 4].pawns[3].position,
-                                                          ))
+                            state = []
+                            for k in range(16):
+                                pawn = players[(i + k//4) % 4].pawns[k % 4]
+                                if pawn.finishing != 0:
+                                    state.append(pawn.position + 52)
+                                else:
+                                    state.append(pawn.position)
+                            state = tuple([moves] + state)
+                            output = nets[x + i].activate(state)
                             chosen = playing.pawns[np.argmax(output)]
                             strikes, again, chosen, reward = playing.move(strikes, moves, chosen, candidates)
 
@@ -108,7 +99,6 @@ def main(genomes, config):
                                     on_board.append(pawn)
 
                         board.path.update(on_board)
-
                         # checking if someone won and ending the game
                         status = [pawn.finished for pawn in playing.pawns]
                         if all(status):
@@ -119,7 +109,7 @@ def main(genomes, config):
                     i += 1
                     i = i % 4
 
-            winner = np.argmax(points)
+            winner = x + np.argmax(points)
             advancing_ge.append(ge[winner])
             advancing_nets.append(nets[winner])
 
@@ -141,6 +131,7 @@ def run(config_path):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
+    p.add_reporter(neat.Checkpointer(500))
 
     winner = p.run(main)
     print('\nBest genome:\n{!s}'.format(winner))

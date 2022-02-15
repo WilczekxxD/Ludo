@@ -69,7 +69,6 @@ def main():
                 player.update()
 
             # after moving and conflicts updating path since final and starting where updated before
-
             on_board = []
             for player in players:
                 for pawn in player.pawns:

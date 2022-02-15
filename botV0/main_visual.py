@@ -74,6 +74,7 @@ def main(genomes, config):
                         # playing player moving
                         # activating net of x + indx of player from ge
                         # activating by position of every pawn
+                        state = []
                         candidates = []
                         chosen = False
                         for pawn in playing.pawns:
@@ -81,24 +82,15 @@ def main(genomes, config):
                             if pawn.possible or (pawn.position == -1 and moves == 6):
                                 candidates.append(pawn)
                         if len(candidates) > 1:
-                            output = nets[x + i].activate((moves, playing.pawns[0].position, playing.pawns[1].position,
-                                                          playing.pawns[2].position, playing.pawns[3].position,
-
-                                                          players[(i + 1) % 4].pawns[0].position,
-                                                          players[(i + 1) % 4].pawns[1].position,
-                                                          players[(i + 1) % 4].pawns[2].position,
-                                                          players[(i + 1) % 4].pawns[3].position,
-
-                                                          players[(i + 2) % 4].pawns[0].position,
-                                                          players[(i + 2) % 4].pawns[1].position,
-                                                          players[(i + 2) % 4].pawns[2].position,
-                                                          players[(i + 2) % 4].pawns[3].position,
-
-                                                          players[(i + 3) % 4].pawns[0].position,
-                                                          players[(i + 3) % 4].pawns[1].position,
-                                                          players[(i + 3) % 4].pawns[2].position,
-                                                          players[(i + 3) % 4].pawns[3].position,
-                                                          ))
+                            state = []
+                            for k in range(16):
+                                pawn = players[(i + k // 4) % 4].pawns[k % 4]
+                                if pawn.finishing != 0:
+                                    state.append(pawn.position + 52)
+                                else:
+                                    state.append(pawn.position)
+                            state = tuple([moves] + state)
+                            output = nets[x + i].activate(state)
                             chosen = playing.pawns[np.argmax(output)]
                             strikes, again, chosen, reward = playing.move(strikes, moves, chosen, candidates)
 
@@ -126,7 +118,6 @@ def main(genomes, config):
                                     on_board.append(pawn)
 
                         board.path.update(on_board)
-
                         # checking if someone won and ending the game
                         status = [pawn.finished for pawn in playing.pawns]
                         if all(status):
