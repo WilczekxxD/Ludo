@@ -45,6 +45,7 @@ def compare_generations(directory):
     plt.axis([0, 500, 0, 100])
     plt.show()
 
+
 if __name__ == "__main__":
     directory = os.path.join("..", "botv1")
     compare_generations(directory)

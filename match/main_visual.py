@@ -14,7 +14,7 @@ import pygame
 clock = pygame.time.Clock()
 pygame.init()
 pygame.font.init()
-frame_rate = 30
+frame_rate = 120
 
 
 def main(nets, matches):
@@ -58,7 +58,6 @@ def main(nets, matches):
 
                 again = False
                 moves = dice.throw()
-                print(i, strikes, moves)
                 # playing player moving
                 # activating net of x + indx of player from ge
                 # activating by position of every pawn
@@ -104,7 +103,6 @@ def main(nets, matches):
                                     state.append(chosen.position)
                                 else:
                                     state.append(pawn.position)
-                            print(f"state {state}")
                             # changing strikes if need be, but only a copy
                             if chosen and (chosen.finished or conflict):
                                 c_strikes = 0
@@ -115,7 +113,6 @@ def main(nets, matches):
                         # getting output from net for every state
                         outputs = [nets[i].activate(state) for state in states]
                         index = np.argmax(outputs)
-                        print(f"outputs: {outputs}\nstates:{states}")
 
                         # choosing and moving the choice, this already has impact on the game
                         chosen = candidates[index]
